@@ -1,0 +1,41 @@
+
+- Title: vCard Generator
+- Author: Anusha
+- Created on: November 13, 2023
+
+1. Objective:
+
+This script generates QR codes and vCard files from a CSV file containing contact information. Each vCard saved in a specified directory. 
+
+
+2. Input:
+
+ csv file named "names.csv" with the following format: Mason,Nicole,"Buyer, retail",nicol.mason@gibson.com,(871)967-6024x82190
+
+   
+3. Output:
+
+Generate one vCard file and OR code per row in the csv_file. The filename
+will be the email address in the row.
+
+ Sample vcard file -
+
+    BEGIN:VCARD
+    VERSION:2.1
+    N:Bennett;Amber
+    FN:Amber Bennett
+    ORG:Authors, Inc.
+    TITLE:Bonds trader
+    TEL;WORK;VOICE:911.815.0504
+    ADR;WORK:;;100 Flat Grape Dr.;Fresno;CA;95555;United States of America
+    EMAIL;PREF;INTERNET:amber.benne@bailey.biz
+    REV:20150922T195243Z
+    END:VCARD
+
+The vCard file will have name as file name.
+
+4. Usage:
+
+The script can be executed from the command line using:
+ 
+    python3 create_vcf.py
