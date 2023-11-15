@@ -1,4 +1,4 @@
-from create_vcf import create_vcard, read_csv
+from create_vcf import create_vcard, read_csv, parse_csv
 import csv
 import os 
 
@@ -43,3 +43,9 @@ def test_read():
                         ['Walker', 'Steve', 'Accommodation manager', 'steve.walke@hicks.info', '(876)953-8282x713']]
 
     assert result == expected_result
+
+def test_parse_csv():
+    parse_csv("names.csv")
+
+    assert os.path.exists("vcards")
+    

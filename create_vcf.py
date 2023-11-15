@@ -27,3 +27,9 @@ def read_csv(file_name):
         for row in csv_file:
             data.append(row)
     return data
+
+def parse_csv(file_name):
+    data = read_csv(file_name)
+    for row in data:
+        vcard_content = create_vcard(row)
+        
