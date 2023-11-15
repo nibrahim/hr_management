@@ -19,3 +19,11 @@ def create_vcard(file):
     END:VCARD
     """
     return content
+
+def read_csv(file_name):
+    data = []
+    with open(file_name,"r") as file:
+        csv_file = csv.reader(file)
+        for row in csv_file:
+            data.append(row)
+    return data
