@@ -1,7 +1,6 @@
 
-- Title: vCard Generator
+- Title: HR Management
 - Author: Anusha
-- Created on: November 13, 2023
 
 1. Objective:
 
@@ -38,4 +37,5 @@ The vCard file will have name as file name.
 
 The script can be executed from the command line using:
  
-    python3 create_vcf.py
+    python3 create_vcf.py names.csv vcard -v --add_qr --qr_size --address " Address"
+
