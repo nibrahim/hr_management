@@ -37,5 +37,11 @@ The vCard file will have name as file name.
 
 The script can be executed from the command line using:
  
-    python3 create_vcf.py names.csv vcard -v --add_qr --qr_size --address " Address"
+    python3 create_vcf.py names.csv vcard   --> generate 10 default vcards
+
+    python3 create_vcf.py names.csv vcard -d --> generate 10 default vcards and corresponding QR codes 
+
+    -- use -qs for generate QR codes with suitable qr_size 
+      
+
 
