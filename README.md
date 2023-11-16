@@ -1,4 +1,4 @@
-# Vcard generator
+# HR Management
 
 This Python script converts data from a CSV file into VCards (.vcf) format. Each row in the CSV file corresponds to an individual's contact information, and the script creates a VCard for each person.
 
@@ -9,7 +9,7 @@ This Python script converts data from a CSV file into VCards (.vcf) format. Each
 
    Place the "names.csv" file in the same directory as the script.
     
-   VCards will be generated and saved in a directory named "v_cards."
+   VCards will be generated and saved in a directory named "vcard"
 
 
 The generated VCards include the following information:
@@ -22,4 +22,6 @@ The generated VCards include the following information:
 
 Output Directory
 
-  If the "v_cards" directory does not exist, the script will create it to store the generated VCards.
+  If the "vcard" directory does not exist, the script will create it to store the generated VCards.
+
+
