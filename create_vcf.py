@@ -32,6 +32,9 @@ def parse_args():
     parser.add_argument(
         "-s", "--qr_size", help="Size of QR code", type=int, default=500
     )
+    parser.add_argument(
+        "-a", "--address", help="Employee address", type=str, default = "100 Flat Grape Dr.;Fresno;CA;95555;United States of America"
+    )
     args = parser.parse_args()
     return args
 
@@ -58,21 +61,22 @@ def setup_logging(log_level):
     logger.addHandler(file_handler)
 
 
-def create_vcard(file):
+def create_vcard(file, address):
     last_name, first_name, title, email, phone = file
     content = f"""BEGIN:VCARD
-VERSION:2.1
-N:{last_name};{first_name}
-FN:{first_name} {last_name}
-ORG:Authors, Inc.
-TITLE:{title}
-TEL;WORK;VOICE:{phone}
-ADR;WORK:;;100 Flat Grape Dr.;Fresno;CA;95555;United States of America
-EMAIL;PREF;INTERNET:{email}
-REV:20150922T195243Z
-END:VCARD
-"""
+    VERSION:2.1
+    N:{last_name};{first_name}
+    FN:{first_name} {last_name}
+    ORG:Authors, Inc.
+    TITLE:{title}
+    TEL;WORK;VOICE:{phone}
+    ADR;WORK:;;{address}
+    EMAIL;PREF;INTERNET:{email}
+    REV:20150922T195243Z
+    END:VCARD
+    """
     return content
+
 
 
 def read_csv(file_name):
@@ -86,12 +90,28 @@ def read_csv(file_name):
     return data
 
 
+def insert_employee_data(row_data, conn):
+    cursor = conn.cursor()
+
+    insert_query = '''
+        INSERT INTO Employees (LastName, FirstName, Title, Email, Phone, Address)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    '''
+    cursor.execute(insert_query, row_data)
+    conn.commit()
+
+    cursor.close()
+
+
+
+
+
 def parse_csv(file_name, args):
     data = read_csv(file_name)
     counter = 0
 
     for row in data[: args.number]:
-        vcard_content = create_vcard(row)
+        vcard_content = create_vcard(row, args.address)
         create_vcard_file(row, vcard_content, args)
         if args.add_qr:
             generate_qr_code(row, vcard_content, args)
