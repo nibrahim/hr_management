@@ -9,10 +9,11 @@ This script generates QR codes and vCard files from a CSV file containing contac
 
 2. Input:
 
- csv file named "names.csv" with the following format: Mason,Nicole,"Buyer, retail",nicol.mason@gibson.com,(871)967-6024x82190
+ csv file (employees list) added to database.  
 
    
 3. Output:
+
 
 Generate one vCard file and OR code per row in the csv_file. The filename
 will be the email address in the row.
@@ -32,14 +33,15 @@ will be the email address in the row.
     END:VCARD
 
 The vCard file will have name as file name.
+Get employees leave table and its count.
+
 
 4. Usage:
 
 The script can be executed from the command line using:
  
-    python3 create_vcf.py names.csv vcard   --> generate 10 default vcards
+    python create_vcf.py -it db -o vcard -d emp_db -u anusha -t employees
 
-    python3 create_vcf.py names.csv vcard -d --> generate 10 default vcards and corresponding QR codes 
 
     -- use -qs for generate QR codes with suitable qr_size 
       
