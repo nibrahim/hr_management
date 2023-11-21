@@ -11,19 +11,19 @@ def parse_args():
     parser = argparse.ArgumentParser(
         prog="create_vcf.py", description="Generate employee database"
     )
-    parser.add_argument("--input_type", help="Specify the data source",choices=['file', 'db'], required=True)
-    parser.add_argument("--input_file", help="Name of input csv file")
-    parser.add_argument("--output_dir", help="Output directory for vCards and QR codes")
-    parser.add_argument("--db_name", help="Name of the database")
-    parser.add_argument("--db_user", help="Database username")
+    parser.add_argument("-it", "--input_type", help="Specify the data source", choices=['file', 'db'], required=True)
+    parser.add_argument("-if", "--input_file", help="Name of input csv file")
+    parser.add_argument("-o", "--output_dir", help="Output directory for vCards and QR codes")
+    parser.add_argument("-d", "--db_name", help="Name of the database")
+    parser.add_argument("-u", "--db_user", help="Database username")
 
-    parser.add_argument("--table_name", help="Name of the database table", required=True)
+    parser.add_argument("-t", "--table_name", help="Name of the database table", required=True)
 
-    parser.add_argument("-n","--number",help="Number of records to generate",action="store",type=int,default=10,)
-    parser.add_argument("-v","--verbose",help="Print detailed logging",action="store_true",default=False,)
+    parser.add_argument("-n", "--number", help="Number of records to generate", action="store", type=int, default=10)
+    parser.add_argument("-v", "--verbose", help="Print detailed logging", action="store_true", default=False)
     parser.add_argument("-q", "--add_qr", help="Add QR codes", action="store_true", default=False)
     parser.add_argument("-s", "--qr_size", help="Size of QR code", type=int, default=500)
-    parser.add_argument( "-a", "--address", help="Employee address", type=str, default="100 Flat Grape Dr.;Fresno;CA;95555;United States of America")
+    parser.add_argument("-a", "--address", help="Employee address", type=str, default="100 Flat Grape Dr.;Fresno;CA;95555;United States of America")
     args = parser.parse_args()
     return args
 
@@ -148,7 +148,7 @@ def create_leaves_table(args):
         ''')
         conn.commit()
         cursor.close()
-        print(f"Table '{args.table_name}' created successfully!")
+        #print("Table created successfully!")
     except psycopg2.Error as e:
         print("Error creating table:", e)
 
@@ -170,7 +170,6 @@ def add_fk_constraint():
         ''')
         conn.commit()
         cursor.close()
-        #print("Foreign key constraint added successfully!")
     except psycopg2.IntegrityError as e:
         print("Error adding foreign key constraint:", e)
 
@@ -228,8 +227,6 @@ def insert_attendance_records():
         conn.commit()
         cursor.close()
         conn.close()
-
-        print("Records inserted successfully!")
     except psycopg2.Error as e:
         print("Error inserting records:", e)
 
@@ -316,6 +313,7 @@ def main():
         logger.info("Details successfully loaded to output directory")
     else:
         logger.error("Failed to fetch data from the database.")
+
 
     while True:
         try:
