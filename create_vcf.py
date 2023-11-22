@@ -6,26 +6,36 @@ import argparse
 import psycopg2
 from datetime import datetime
 
+logger =None
 
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="create_vcf.py", description="Generate employee database"
     )
-    parser.add_argument("-it", "--input_type", help="Specify the data source", choices=['file', 'db'], required=True)
-    parser.add_argument("-if", "--input_file", help="Name of input csv file")
-    parser.add_argument("-o", "--output_dir", help="Output directory for vCards and QR codes")
-    parser.add_argument("-d", "--db_name", help="Name of the database")
-    parser.add_argument("-u", "--db_user", help="Database username")
-
-    parser.add_argument("-t", "--table_name", help="Name of the database table", required=True)
+    subparsers = parser.add_subparsers(dest='subcommand', help='sub-command help')
+    parser.add_argument("--output_dir", help="Output directory for vCards and QR codes")
 
     parser.add_argument("-n", "--number", help="Number of records to generate", action="store", type=int, default=10)
     parser.add_argument("-v", "--verbose", help="Print detailed logging", action="store_true", default=False)
     parser.add_argument("-q", "--add_qr", help="Add QR codes", action="store_true", default=False)
     parser.add_argument("-s", "--qr_size", help="Size of QR code", type=int, default=500)
     parser.add_argument("-a", "--address", help="Employee address", type=str, default="100 Flat Grape Dr.;Fresno;CA;95555;United States of America")
+
+    # Subcommand initdb
+    parser_initdb = subparsers.add_parser("initdb", help="Initialize creation of database and table")
+    parser_initdb.add_argument("-u", "--user_source", help="Adding user name of database", action="store", type=str, default='emp_db')
+    parser_initdb.add_argument("-d", "--user_db", help="Adding database name", action="store", type=str, default='anusha')
+
+    # Subcommand load
+    parser_load = subparsers.add_parser("load", help="Load data to database from csvfile")
+    parser_load.add_argument("-c", "--csv", help="Name of csv file to load", action="store", type=str, default='details.csv')
+    parser_load.add_argument("-us", "--user_source", help="Adding user name of database", action="store", type=str, default='anusha')
+    parser_load.add_argument("-ud", "--user_db", help="Adding database name", action="store", type=str, default='emp_db')
+    parser_load.add_argument("-cn", "--load_count", help="Number of records to load", action="store", type=int, default=10)
+
     args = parser.parse_args()
     return args
+
 
 def setup_logging(log_level):
     global logger
@@ -71,14 +81,14 @@ def create_vcard(file, address):
 
 def create_emp_db_and_table(db_name, db_user):
     try:
-        conn = psycopg2.connect(dbname='emp_db', user=db_user)
+        conn = psycopg2.connect(f"dbname=postgres user={db_user}")
         conn.autocommit = True
         cursor = conn.cursor()
         cursor.execute(f"CREATE DATABASE {db_name}")
         cursor.close()
         conn.close()
 
-        conn = psycopg2.connect(dbname=db_name, user=db_user)
+        conn = psycopg2.connect(f"dbname={db_name}, user={db_user}")
         cursor = conn.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS employees (
@@ -87,24 +97,20 @@ def create_emp_db_and_table(db_name, db_user):
                 first_name VARCHAR(255) NOT NULL,
                 title VARCHAR(255),
                 email VARCHAR(255) NOT NULL,
-                phone VARCHAR(50)
-            )
-        ''')
+                phone VARCHAR(50))''')
         conn.commit()
         cursor.close()
         conn.close()
         return True
     except Exception as e:
-        logger.error(f"Error creating database and table: {e}")
         return False
+
     
 def insert_csv_to_db(csv_file, db_name, db_user):
     conn = psycopg2.connect(
         dbname=db_name,
         user=db_user)
-
     cursor = conn.cursor()
-
     with open(csv_file, 'r') as file:
         reader = csv.reader(file)
         next(reader) 
@@ -112,7 +118,6 @@ def insert_csv_to_db(csv_file, db_name, db_user):
             cursor.execute(
                 "INSERT INTO Employees (last_name, first_name, title, email, phone) VALUES (%s, %s, %s, %s, %s)",
                 row[:5])
-
     conn.commit()
     cursor.close()
     conn.close()
@@ -125,7 +130,6 @@ def fetch_data_from_db():
     conn = psycopg2.connect(
         dbname="emp_db",
         user="anusha")
-
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM Employees")
     results = cursor.fetchall()
@@ -143,40 +147,33 @@ def create_leaves_table(args):
                 employee_id INTEGER NOT NULL,
                 leave_date DATE NOT NULL,
                 reason VARCHAR(255) NOT NULL,
-                PRIMARY KEY (employee_id, leave_date)
-            )
-        ''')
+                PRIMARY KEY (employee_id, leave_date))''')
         conn.commit()
         cursor.close()
-        #print("Table created successfully!")
+        print(f"Table '{args.table_name}' created successfully!")
     except psycopg2.Error as e:
         print("Error creating table:", e)
 
-def add_fk_constraint():
+def add_fk():
     conn = psycopg2.connect(dbname='emp_db', user='anusha')
     cursor = conn.cursor()
-
     try:
         cursor.execute('''
             ALTER TABLE IF EXISTS attendance
-            DROP CONSTRAINT IF EXISTS fk_employee_id
-        ''')
+            DROP CONSTRAINT IF EXISTS fk_employee_id''')
         conn.commit()
-
         cursor.execute('''
             ALTER TABLE attendance
             ADD CONSTRAINT fk_employee_id
-            FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
-        ''')
+            FOREIGN KEY (employee_id) REFERENCES employees(employee_id)''')
         conn.commit()
         cursor.close()
     except psycopg2.IntegrityError as e:
-        print("Error adding foreign key constraint:", e)
+        print("Error adding foreign key:", e)
 
 def get_leaves_by_employee_id(employee_id):
     conn = psycopg2.connect(dbname='emp_db', user='anusha')
     cursor = conn.cursor()
-
     cursor.execute('SELECT leave_date, reason FROM Attendance WHERE employee_id = %s', (employee_id,))
     results = cursor.fetchall()
     cursor.close()
@@ -186,16 +183,12 @@ def get_leaves_by_employee_id(employee_id):
 def get_leave_count_for_employee(employee_id):
     conn = psycopg2.connect(dbname='emp_db', user='anusha')
     cursor = conn.cursor()
-
     cursor.execute(
         'SELECT COUNT(*) FROM Attendance WHERE employee_id = %s',
-        (employee_id,)
-    )
+        (employee_id,))
     leave_count = cursor.fetchone()[0]
-
     cursor.close()
     conn.close()
-
     return leave_count
 
 def insert_attendance_records():
@@ -217,19 +210,16 @@ def insert_attendance_records():
         ]
 
         sql = "INSERT INTO attendance (employee_id, leave_date, reason) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING"
-
         employee_ids = list(range(1, 100))  
         index = 0
         for employee_id in employee_ids:  
             cursor.execute(sql, (employee_id, records[index][0], records[index][1]))
             index = (index + 1) % len(records)
-
         conn.commit()
         cursor.close()
         conn.close()
     except psycopg2.Error as e:
         print("Error inserting records:", e)
-
 insert_attendance_records()
 
 
@@ -243,20 +233,16 @@ def access_data_generate_vcards(employee_data, args):
         if args.add_qr:
             generate_qr_code(row, vcard_content, args)
         counter += 1
-
         if args.number and counter >= args.number:
             break
-
     logger.info(f"Processed {counter} records")
 
 counter = 0
-
 def create_vcard_file(row_data, content, args):
     global counter
 
     file_path = os.path.join(
-        args.output_dir, f"{str(row_data[1]).lower()}_{str(row_data[0]).lower()}.vcf"
-    )
+        args.output_dir, f"{str(row_data[1]).lower()}_{str(row_data[0]).lower()}.vcf")
     if not os.path.exists(file_path):
         with open(file_path, "w") as file:
             file.write(content)
@@ -285,44 +271,47 @@ def generate_qr_code(row_data, content, args):
 def clear_output_dir(output_dir):
     if os.path.exists(output_dir):
         files_in_dir = os.listdir(output_dir)
-
         for file in files_in_dir:
             file_path = os.path.join(output_dir, file)
-
             if os.path.isfile(file_path):
                 os.remove(file_path)
 
 
 def main():
     args = parse_args()
-    if args.verbose:
-        setup_logging(logging.DEBUG)
-    else:
-        setup_logging(logging.INFO)
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-    else:
-        clear_output_dir(args.output_dir)
 
-    create_leaves_table(args)
-    add_fk_constraint()
+    if args.subcommand == "initdb":
+        success = create_emp_db_and_table(args.user_source, args.user_db)
+        if success:
+            logger.info("Database and table created successfully!")
 
-    data_from_db = fetch_data_from_db()  
-    if data_from_db: 
-        access_data_generate_vcards(data_from_db, args)
-        logger.info("Details successfully loaded to output directory")
     else:
-        logger.error("Failed to fetch data from the database.")
 
+        if args.verbose:
+            setup_logging(logging.DEBUG)
+        else:
+            setup_logging(logging.INFO)
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+        else:
+            clear_output_dir(args.output_dir)
+
+        create_leaves_table(args)
+        add_fk()
+
+        data_from_db = fetch_data_from_db()  
+        if data_from_db: 
+            access_data_generate_vcards(data_from_db, args)
+            logger.info("Details successfully loaded to output directory")
+        else:
+            logger.error("Failed to fetch data from the database.")
 
     while True:
         try:
             employee_id_to_check = int(input("Enter the employee ID to get leave records: "))
             if employee_id_to_check == 0:
                 break
-
             leave_date = input("Enter the date (YYYY-MM-DD) to get leave records: ")
-
             conn = psycopg2.connect(dbname='emp_db', user='anusha')
             cursor = conn.cursor()
 
@@ -334,7 +323,6 @@ def main():
     (employee_id_to_check, leave_date))
 
             records = cursor.fetchall()
-
             if not records:
                 print("No records found for the provided details.")
             else:
